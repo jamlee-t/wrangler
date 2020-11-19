@@ -25,6 +25,7 @@ func (h *Handlers) Handle(key string, obj runtime.Object) (runtime.Object, error
 	)
 
 	for _, handler := range h.handlers {
+		// NOTE(JamLee): 这里看到所有的 handler 的返回值
 		newObj, err := handler.handler(key, obj)
 		if err != nil && errors2.Cause(err) != ErrSkip {
 			errs = append(errs, &handlerError{

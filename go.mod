@@ -15,7 +15,7 @@ require (
 	golang.org/x/tools v0.1.10-0.20220218145154-897bd77cd717
 	k8s.io/api v0.24.0
 	k8s.io/apiextensions-apiserver v0.24.0
-	k8s.io/apimachinery v0.24.0
+	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.0
 	k8s.io/code-generator v0.24.0
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185

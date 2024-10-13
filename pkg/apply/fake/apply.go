@@ -3,9 +3,9 @@ package fake
 import (
 	"context"
 
-	"github.com/rancher/wrangler/pkg/apply"
-	"github.com/rancher/wrangler/pkg/apply/injectors"
-	"github.com/rancher/wrangler/pkg/objectset"
+	"github.com/rancher/wrangler/v3/pkg/apply"
+	"github.com/rancher/wrangler/v3/pkg/apply/injectors"
+	"github.com/rancher/wrangler/v3/pkg/objectset"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -14,18 +14,19 @@ var _ apply.Apply = (*FakeApply)(nil)
 
 type FakeApply struct {
 	Objects []*objectset.ObjectSet
+	Count   int
 }
 
 func (f *FakeApply) Apply(set *objectset.ObjectSet) error {
 	f.Objects = append(f.Objects, set)
+	f.Count++
 	return nil
 }
 
 func (f *FakeApply) ApplyObjects(objs ...runtime.Object) error {
 	os := objectset.NewObjectSet()
 	os.Add(objs...)
-	f.Objects = append(f.Objects, os)
-	return nil
+	return f.Apply(os)
 }
 
 func (f *FakeApply) WithCacheTypes(igs ...apply.InformerGetter) apply.Apply {

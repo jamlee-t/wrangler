@@ -5,31 +5,28 @@ import (
 	"io"
 	"strings"
 
-	args2 "github.com/rancher/wrangler/pkg/controller-gen/args"
+	"github.com/rancher/wrangler/v3/pkg/controller-gen/args"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/namer"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/namer"
+	"k8s.io/gengo/v2/types"
 )
 
-func GroupVersionInterfaceGo(gv schema.GroupVersion, args *args.GeneratorArgs, customArgs *args2.CustomArgs) generator.Generator {
+func GroupVersionInterfaceGo(gv schema.GroupVersion, customArgs *args.CustomArgs) generator.Generator {
 	return &groupInterfaceGo{
 		gv:         gv,
-		args:       args,
 		customArgs: customArgs,
-		DefaultGen: generator.DefaultGen{
-			OptionalName: "interface",
+		GoGenerator: generator.GoGenerator{
+			OutputFilename: "interface.go",
 		},
 	}
 }
 
 type groupInterfaceGo struct {
-	generator.DefaultGen
+	generator.GoGenerator
 
 	gv         schema.GroupVersion
-	args       *args.GeneratorArgs
-	customArgs *args2.CustomArgs
+	customArgs *args.CustomArgs
 }
 
 func (f *groupInterfaceGo) Imports(context *generator.Context) []string {
@@ -90,10 +87,12 @@ func (f *groupInterfaceGo) Init(c *generator.Context, w io.Writer) error {
 			"versionUpper": namer.IC(f.gv.Version),
 			"groupUpper":   upperLowercase(f.gv.Group),
 		}
-
-		sw.Do("func (c *version) {{.type}}() {{.type}}Controller {\n", m)
-		sw.Do("return New{{.type}}Controller(schema.GroupVersionKind{Group:\"{{.group}}\",Version:\"{{.version}}\",Kind:\"{{.type}}\"}	, \"{{.pluralLower}}\", {{.namespaced}}, c.controllerFactory)\n", m)
-		sw.Do("}\n", m)
+		body := `
+		func (v *version) {{.type}}() {{.type}}Controller {
+			return generic.New{{ if not .namespaced}}NonNamespaced{{end}}Controller[*{{.version}}.{{.type}}, *{{.version}}.{{.type}}List](schema.GroupVersionKind{Group: "{{.group}}", Version: "{{.version}}", Kind: "{{.type}}"}, "{{.pluralLower}}", {{ if .namespaced}}true, {{end}}v.controllerFactory)
+		}
+		`
+		sw.Do(body, m)
 	}
 
 	return sw.Error()

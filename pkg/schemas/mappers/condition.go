@@ -1,7 +1,7 @@
 package mappers
 
 import (
-	types "github.com/rancher/wrangler/pkg/schemas"
+	types "github.com/rancher/wrangler/v3/pkg/schemas"
 )
 
 type Condition struct {

@@ -4,30 +4,27 @@ import (
 	"fmt"
 	"io"
 
-	args2 "github.com/rancher/wrangler/pkg/controller-gen/args"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/namer"
+	"github.com/rancher/wrangler/v3/pkg/controller-gen/args"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/namer"
 )
 
-func GroupInterfaceGo(group string, args *args.GeneratorArgs, customArgs *args2.CustomArgs) generator.Generator {
+func GroupInterfaceGo(group string, customArgs *args.CustomArgs) generator.Generator {
 	return &interfaceGo{
 		group:      group,
-		args:       args,
 		customArgs: customArgs,
-		DefaultGen: generator.DefaultGen{
-			OptionalName: "interface",
-			OptionalBody: []byte(interfaceBody),
+		GoGenerator: generator.GoGenerator{
+			OutputFilename: "interface.go",
+			OptionalBody:   []byte(interfaceBody),
 		},
 	}
 }
 
 type interfaceGo struct {
-	generator.DefaultGen
+	generator.GoGenerator
 
 	group      string
-	args       *args.GeneratorArgs
-	customArgs *args2.CustomArgs
+	customArgs *args.CustomArgs
 }
 
 func (f *interfaceGo) Imports(context *generator.Context) []string {
@@ -37,7 +34,11 @@ func (f *interfaceGo) Imports(context *generator.Context) []string {
 		if gv.Group != f.group {
 			continue
 		}
-		packages = append(packages, fmt.Sprintf("%s \"%s/controllers/%s/%s\"", gv.Version, f.customArgs.Package,
+		pkg := f.customArgs.ImportPackage
+		if pkg == "" {
+			pkg = f.customArgs.Package
+		}
+		packages = append(packages, fmt.Sprintf("%s \"%s/controllers/%s/%s\"", gv.Version, pkg,
 			groupPackageName(gv.Group, f.customArgs.Options.Groups[gv.Group].OutputControllerPackageName), gv.Version))
 	}
 
@@ -59,7 +60,7 @@ func (f *interfaceGo) Init(c *generator.Context, w io.Writer) error {
 	}
 	sw.Do("}\n", nil)
 
-	if err := f.DefaultGen.Init(c, w); err != nil {
+	if err := f.GoGenerator.Init(c, w); err != nil {
 		return err
 	}
 

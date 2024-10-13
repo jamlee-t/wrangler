@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// GuessPluralName attempts to pluralize a noun.
 func GuessPluralName(name string) string {
 	if name == "" {
 		return name
@@ -36,6 +37,10 @@ func suffix(str, end string) bool {
 	return strings.HasSuffix(str, end)
 }
 
+// Limit the length of a string to count characters. If the string's length is
+// greater or equal to count, it will be truncated and a hash will be appended
+// to the end.
+// Warning: runtime error for count <= 5: https://go.dev/play/p/UAbpZIOvIYo
 func Limit(s string, count int) string {
 	if len(s) < count {
 		return s
@@ -43,12 +48,16 @@ func Limit(s string, count int) string {
 	return fmt.Sprintf("%s-%s", s[:count-6], Hex(s, 5))
 }
 
-func Hex(s string, length int) string {
+// Hex gets the checksum of s, encodes it to hexadecimal and returns the first n characters of that hexadecimal.
+// Warning: runtime error for  n > 32 or n < 0.
+func Hex(s string, n int) string {
 	h := md5.Sum([]byte(s))
 	d := hex.EncodeToString(h[:])
-	return d[:length]
+	return d[:n]
 }
 
+// SafeConcatName concatenates the given strings and ensures the returned name is under 64 characters
+// by cutting the string off at 57 characters and setting the last 6 with an encoded version of the concatenated string.
 func SafeConcatName(name ...string) string {
 	fullPath := strings.Join(name, "-")
 	if len(fullPath) < 64 {
